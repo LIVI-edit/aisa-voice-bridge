@@ -1,0 +1,9 @@
+; Merge into ari.conf. Replace the placeholder with your own strong password.
+[general]
+enabled=yes
+pretty=no
+
+[aisa_bridge]
+type=user
+read_only=no
+password=REPLACE_WITH_LOCAL_ARI_PASSWORD

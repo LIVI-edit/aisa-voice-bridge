@@ -1,0 +1,62 @@
+Node.js: v24.19.0
+Command: npm test
+Exit code: 0
+
+
+> aisa-voice-bridge-mvp@0.1.0 test
+> node --test
+
+✔ ARI REST encodes endpoint and parameters, authenticates via Basic header, reads variables (8.912962ms)
+✔ cleanup ignores only 404; other HTTP errors and fetch failures remain visible without credentials (1.466665ms)
+✔ ARI event wait subscribes before action and releases all listeners on success (0.326466ms)
+✔ ARI wait supports abort, fault and finite timeout without leaking listeners (5.728336ms)
+✔ arbitrary delta split into 160-byte frames without changing bytes (1.886256ms)
+✔ partial frame carried into next delta (0.290615ms)
+✔ one-byte deltas reproduce continuous audio exactly (6.830419ms)
+✔ overflow is bounded, atomic and does not allocate an unbounded queue (0.502227ms)
+✔ cleanup clears full frames and tail; repeated cleanup/push safe (0.197478ms)
+✔ last partial frame padded with PCMU silence (0.359829ms)
+✔ pacer sends one frame per 20ms; a stalled timer never creates a catch-up burst (0.429423ms)
+✔ pacer preserves tail until 60ms idle; stop cancels even an already scheduled callback (0.312341ms)
+✔ pacer error stops timer and clears remaining audio (2.754225ms)
+✔ answered call uses exact Zadarma route, mixing bridge, ExternalMedia and ARI-discovered port (17.655219ms)
+✔ input RTP extracts only PCMU bytes; rejects foreign, invalid, duplicate and stale packets (1.233271ms)
+✔ phone hangup cleans every resource once and fences late audio (8.682502ms)
+✔ OpenAI failure hangs up phone, clears media and returns failure (4.881294ms)
+✔ hangup during ExternalMedia creation waits for late REST response then deletes resource (8.481096ms)
+✔ REST failure before answer releases waits, UDP and OpenAI; no later bridge is created (0.484921ms)
+✔ invalid discovered ExternalMedia port fails instead of using a guessed port (0.566529ms)
+✔ audio queue overflow fails the call and releases resources (2.563827ms)
+✔ config has localhost ARI, PCMU PT0 and default Zadarma endpoint (1.682759ms)
+✔ external ARI, URL credentials, wrong static codec PT, public UDP bind and missing secrets rejected (0.609996ms)
+✔ phone format rejects SIP dial-string injection and accepts E.164 (0.267971ms)
+✔ Zadarma normalization removes leading plus only from the validated dial target (0.170794ms)
+✔ CLI validation and normalization still reject numbers without plus and malformed international numbers (0.296922ms)
+✔ known secrets and Basic token redacted in error text (0.632179ms)
+✔ exact Live endpoint, Bearer header and session.start; waits for session.started (2.67226ms)
+✔ raw audio preserved; greeting sends full Live event with delegation_id null and exact content (0.663512ms)
+✔ mismatched codec confirmation yields STOP/HOLD (0.59372ms)
+✔ cleanup waits for session.closed; repeated close has same promise and audio stops (0.554275ms)
+✔ cleanup timeout returns unconfirmed finalization and closes socket (20.085332ms)
+✔ startup timeout and transport failure reject instead of hanging (5.42999ms)
+✔ OpenAI error details do not echo server message containing secrets (0.645083ms)
+✔ RTP build → parse: PCMU bytes and all header fields preserved (4.954923ms)
+✔ sequence increases by one, timestamp by 160, SSRC stays stable (0.431043ms)
+✔ sequence/timestamp wrap at unsigned 16/32-bit limits (0.420898ms)
+✔ CSRC parsing skips two 32-bit identifiers (0.622037ms)
+✔ extension parsing uses 32-bit word length, not bytes (0.338362ms)
+✔ padding excluded from audio payload (0.361596ms)
+✔ CSRC + extension + padding can coexist (0.479439ms)
+✔ explicit dynamic PT accepted only when configured (0.278584ms)
+✔ invalid RTP rejected: type, short header, wrong version, missing CSRC/extension (0.305079ms)
+✔ invalid RTP rejected: extension overrun, zero/oversized padding, empty payload, wrong PT (1.829773ms)
+✔ packet builder rejects oversized payload and invalid fields (0.590067ms)
+ℹ tests 45
+ℹ suites 0
+ℹ pass 45
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 657.361215
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.

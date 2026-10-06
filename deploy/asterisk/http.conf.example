@@ -1,0 +1,5 @@
+; Merge these settings into the existing http.conf; do not blindly overwrite it.
+[general]
+enabled=yes
+bindaddr=127.0.0.1
+bindport=8088
