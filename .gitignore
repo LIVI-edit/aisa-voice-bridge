@@ -1,5 +1,13 @@
 .env
-.env.*
-!.env.example
 node_modules/
+data/
+*.sqlite
+*.sqlite-wal
+*.sqlite-shm
+*.db
+*.db-wal
+*.db-shm
+exports/
+backups/
+run-data/
 *.log
