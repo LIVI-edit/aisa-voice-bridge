@@ -55,7 +55,12 @@ function buildCompiler() {
   try {
     const Ajv = require('ajv');
     const ajv = new Ajv({ strict: true, allErrors: true, coerceTypes: false, useDefaults: false, removeAdditional: false });
-    return { engine:'ajv', compile:(schema)=>ajv.compile(schema) };
+    ajv.addSchema(contractsSchema);
+    return { engine:'ajv', compile:(_schema, name)=>{
+      const validator = ajv.getSchema(`${contractsSchema.$id}#/definitions/${name}`);
+      if (!validator) throw new Error(`Missing contract definition validator: ${name}`);
+      return validator;
+    } };
   } catch (error) {
     if (process.env.AISA_TEST_ALLOW_INTERNAL_SCHEMA_VALIDATOR !== '1') throw new Error(`Ajv 8.17.1 is required: ${error.code || error.message}`);
     return { engine:'test-internal-fallback', compile:(schema)=>{ const fn=(data)=>{ const errs=internalValidate(schema,data,contractsSchema); fn.errors=errs.length?errs:null; return errs.length===0; }; fn.errors=null; return fn; } };
@@ -65,7 +70,7 @@ const compiler = buildCompiler();
 export const validatorEngine = compiler.engine;
 
 const validators = new Map();
-for (const [name,schema] of Object.entries(contractsSchema.definitions)) validators.set(name, compiler.compile(schema));
+for (const [name,schema] of Object.entries(contractsSchema.definitions)) validators.set(name, compiler.compile(schema,name));
 const semanticValidator = compiler.engine === 'ajv'
   ? (()=>{ const Ajv=require('ajv'); const ajv=new Ajv({strict:true,allErrors:true,coerceTypes:false,useDefaults:false,removeAdditional:false}); return ajv.compile(postCallSemanticSchema); })()
   : (()=>{ const fn=(data)=>{ const errs=internalValidate(postCallSemanticSchema,data,{definitions:{}}); fn.errors=errs.length?errs:null; return !errs.length;}; return fn;})();
