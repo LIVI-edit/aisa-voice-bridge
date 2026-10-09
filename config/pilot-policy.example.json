@@ -1,0 +1,9 @@
+{
+  "policy_version": "pilot-unconfigured-v1",
+  "production_calling_policy_id": null,
+  "allowed_authorization_basis_ids": [],
+  "test_authorization_basis_ids": ["test_authorized"],
+  "real_calls_enabled": false,
+  "retention_policy_ref": null,
+  "notes": "Owner/legal production policy remains a deployment gate. Offline/fake tests may use test_authorized only."
+}

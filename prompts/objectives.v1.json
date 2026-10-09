@@ -1,0 +1,35 @@
+{
+  "registry_version": "1",
+  "scenarios": [
+    {
+      "scenario_id": "initial_intro",
+      "version": "1",
+      "variant_label": "A_explicit_ai",
+      "presentation_mode": "explicit_ai",
+      "opener": "Добрий день. Я AI-помічник компанії LiVi Edit. Коротко телефоную щодо нашого продукту AISA.",
+      "goal": "Determine whether the person is relevant for a short AISA product conversation and, if appropriate, propose a human next step.",
+      "max_discovery_questions": 3,
+      "allowed_next_steps": ["human_followup", "send_material", "callback", "demo", "discovery"]
+    },
+    {
+      "scenario_id": "initial_intro_operator",
+      "version": "1",
+      "variant_label": "B_company_assistant",
+      "presentation_mode": "company_assistant",
+      "opener": "Добрий день. Я помічник компанії LiVi Edit. Коротко телефоную щодо нашого продукту AISA.",
+      "goal": "Determine whether the person is relevant for a short AISA product conversation and, if appropriate, propose a human next step.",
+      "max_discovery_questions": 3,
+      "allowed_next_steps": ["human_followup", "send_material", "callback", "demo", "discovery"]
+    },
+    {
+      "scenario_id": "executive_intro",
+      "version": "1",
+      "variant_label": null,
+      "presentation_mode": "explicit_ai",
+      "opener": "Добрий день. Я AI-помічник компанії LiVi Edit. Маю коротке питання щодо AISA для e-commerce.",
+      "goal": "Qualify executive-level relevance quickly and propose only a bounded human next step.",
+      "max_discovery_questions": 2,
+      "allowed_next_steps": ["human_followup", "callback", "demo", "discovery"]
+    }
+  ]
+}

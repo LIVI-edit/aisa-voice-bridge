@@ -1,0 +1,10 @@
+{
+  "version": "1",
+  "source": "owner_supplied",
+  "facts": [
+    "LiVi Edit is a product IT company working with software, e-commerce and AI business solutions.",
+    "AISA helps understand a shopper's need and select products from a real retailer catalogue, moving the shopper closer to purchase.",
+    "A working AISA demo exists.",
+    "Giftico has a real AISA deployment with catalogue and users."
+  ]
+}

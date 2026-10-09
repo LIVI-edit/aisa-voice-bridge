@@ -1,0 +1,2068 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "urn:livi:aisa:voice:pilot:contracts:v1",
+  "title": "AISA Voice pilot contracts v1 — auditor design",
+  "definitions": {
+    "Actor": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "uid": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "user": {
+          "type": "string",
+          "maxLength": 128,
+          "minLength": 1
+        }
+      },
+      "required": [
+        "uid",
+        "user"
+      ]
+    },
+    "Source": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "type": "string",
+          "enum": [
+            "owner_supplied",
+            "public_source",
+            "prior_review"
+          ]
+        },
+        "reference": {
+          "type": "string",
+          "maxLength": 1000,
+          "minLength": 1
+        },
+        "captured_at": {
+          "type": "string",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d{1,3})?Z$"
+        },
+        "supplied_by": {
+          "type": "string",
+          "maxLength": 128,
+          "minLength": 1
+        }
+      },
+      "required": [
+        "kind",
+        "reference",
+        "captured_at",
+        "supplied_by"
+      ]
+    },
+    "NextAction": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "type": "string",
+          "enum": [
+            "human_followup",
+            "send_material",
+            "callback",
+            "demo",
+            "discovery"
+          ]
+        },
+        "note": {
+          "type": "string",
+          "maxLength": 500,
+          "minLength": 1
+        },
+        "due_text": {
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 256,
+              "minLength": 0
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "due_at": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d{1,3})?Z$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "review_id": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        }
+      },
+      "required": [
+        "kind",
+        "note",
+        "due_text",
+        "due_at",
+        "review_id"
+      ]
+    },
+    "Company": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "company_id": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "revision": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "name": {
+          "type": "string",
+          "maxLength": 256,
+          "minLength": 1
+        },
+        "context": {
+          "type": "string",
+          "maxLength": 2000,
+          "minLength": 0
+        },
+        "source": {
+          "$ref": "#/definitions/Source"
+        },
+        "created_at": {
+          "type": "string",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d{1,3})?Z$"
+        },
+        "updated_at": {
+          "type": "string",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d{1,3})?Z$"
+        }
+      },
+      "required": [
+        "company_id",
+        "revision",
+        "name",
+        "context",
+        "source",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    "Contact": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "contact_id": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "revision": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "company_id": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "person_name": {
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 256,
+              "minLength": 0
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "role_title": {
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 256,
+              "minLength": 0
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "phone_e164": {
+          "type": "string",
+          "pattern": "^\\+[1-9]\\d{7,14}$"
+        },
+        "language_preference": {
+          "type": "string",
+          "enum": [
+            "uk",
+            "ru",
+            "unknown"
+          ]
+        },
+        "context": {
+          "type": "string",
+          "maxLength": 2000,
+          "minLength": 0
+        },
+        "phone_source": {
+          "$ref": "#/definitions/Source"
+        },
+        "context_source": {
+          "$ref": "#/definitions/Source"
+        },
+        "permission_state": {
+          "type": "string",
+          "enum": [
+            "unreviewed",
+            "approved",
+            "blocked"
+          ]
+        },
+        "authorization_id": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "dnc_state": {
+          "type": "string",
+          "enum": [
+            "clear",
+            "hold",
+            "confirmed"
+          ]
+        },
+        "last_call_id": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "last_attempt_at": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d{1,3})?Z$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "next_action": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/NextAction"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "created_at": {
+          "type": "string",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d{1,3})?Z$"
+        },
+        "updated_at": {
+          "type": "string",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d{1,3})?Z$"
+        }
+      },
+      "required": [
+        "contact_id",
+        "revision",
+        "company_id",
+        "person_name",
+        "role_title",
+        "phone_e164",
+        "language_preference",
+        "context",
+        "phone_source",
+        "context_source",
+        "permission_state",
+        "authorization_id",
+        "dnc_state",
+        "last_call_id",
+        "last_attempt_at",
+        "next_action",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    "Authorization": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "authorization_id": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "contact_id": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "phone_e164": {
+          "type": "string",
+          "pattern": "^\\+[1-9]\\d{7,14}$"
+        },
+        "contact_revision": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "company_revision": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "policy_version": {
+          "type": "string",
+          "maxLength": 64,
+          "minLength": 1
+        },
+        "basis": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_.:-]{2,63}$"
+        },
+        "evidence_ref": {
+          "type": "string",
+          "maxLength": 1000,
+          "minLength": 1
+        },
+        "authorized_at": {
+          "type": "string",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d{1,3})?Z$"
+        },
+        "expires_at": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d{1,3})?Z$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "actor": {
+          "$ref": "#/definitions/Actor"
+        },
+        "revoked_at": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d{1,3})?Z$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "reason": {
+          "type": "string",
+          "maxLength": 500,
+          "minLength": 1
+        }
+      },
+      "required": [
+        "authorization_id",
+        "contact_id",
+        "phone_e164",
+        "contact_revision",
+        "company_revision",
+        "policy_version",
+        "basis",
+        "evidence_ref",
+        "authorized_at",
+        "expires_at",
+        "actor",
+        "revoked_at",
+        "reason"
+      ]
+    },
+    "ContactContext": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "contact": {
+          "$ref": "#/definitions/Contact"
+        },
+        "company": {
+          "$ref": "#/definitions/Company"
+        },
+        "reviewed_history": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "call_id": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+              },
+              "summary": {
+                "type": "string",
+                "maxLength": 1000,
+                "minLength": 1
+              },
+              "review_id": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+              }
+            },
+            "required": [
+              "call_id",
+              "summary",
+              "review_id"
+            ]
+          },
+          "maxItems": 3
+        },
+        "objective_id": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_-]{2,63}$"
+        },
+        "allowed_next_steps": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "human_followup",
+              "send_material",
+              "callback",
+              "demo",
+              "discovery"
+            ]
+          },
+          "maxItems": 5
+        }
+      },
+      "required": [
+        "contact",
+        "company",
+        "reviewed_history",
+        "objective_id",
+        "allowed_next_steps"
+      ]
+    },
+    "PromptSnapshot": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "policy_version": {
+          "type": "string",
+          "maxLength": 64,
+          "minLength": 1
+        },
+        "facts_version": {
+          "type": "string",
+          "maxLength": 64,
+          "minLength": 1
+        },
+        "objective_version": {
+          "type": "string",
+          "maxLength": 64,
+          "minLength": 1
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "instructions": {
+          "type": "string",
+          "maxLength": 32768,
+          "minLength": 1
+        },
+        "greeting": {
+          "type": "string",
+          "maxLength": 2000,
+          "minLength": 1
+        },
+        "input_data_json": {
+          "type": "string",
+          "maxLength": 65536,
+          "minLength": 1
+        },
+        "scenario_id": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_-]{2,63}$"
+        },
+        "scenario_version": {
+          "type": "string",
+          "maxLength": 64,
+          "minLength": 1
+        },
+        "variant_label": {
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 64,
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "presentation_mode": {
+          "type": "string",
+          "enum": [
+            "explicit_ai",
+            "company_assistant",
+            "custom_reviewed"
+          ]
+        }
+      },
+      "required": [
+        "policy_version",
+        "facts_version",
+        "objective_version",
+        "sha256",
+        "instructions",
+        "greeting",
+        "input_data_json",
+        "scenario_id",
+        "scenario_version",
+        "variant_label",
+        "presentation_mode"
+      ]
+    },
+    "ConfigSnapshot": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "endpoint_alias": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9_-]{1,64}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "dial_number_format": {
+          "type": "string",
+          "enum": [
+            "e164",
+            "international_digits"
+          ]
+        },
+        "outbound_caller_id": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^\\+[1-9]\\d{7,14}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "telephony_approval_ref": {
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 1000,
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "call_policy_version": {
+          "type": "string",
+          "maxLength": 64,
+          "minLength": 1
+        },
+        "live_model": {
+          "const": "gpt-live-1"
+        },
+        "live_voice": {
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 64,
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "post_call_model": {
+          "type": "string",
+          "maxLength": 128,
+          "minLength": 1
+        },
+        "max_talk_seconds": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "max_total_seconds": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "asterisk_absolute_seconds": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "real_calls_enabled": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "endpoint_alias",
+        "dial_number_format",
+        "outbound_caller_id",
+        "telephony_approval_ref",
+        "call_policy_version",
+        "live_model",
+        "live_voice",
+        "post_call_model",
+        "max_talk_seconds",
+        "max_total_seconds",
+        "asterisk_absolute_seconds",
+        "real_calls_enabled"
+      ]
+    },
+    "CleanupState": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "phone": {
+          "type": "string",
+          "enum": [
+            "absent",
+            "pending",
+            "unknown"
+          ]
+        },
+        "media": {
+          "type": "string",
+          "enum": [
+            "absent",
+            "pending",
+            "unknown"
+          ]
+        },
+        "bridge": {
+          "type": "string",
+          "enum": [
+            "absent",
+            "pending",
+            "unknown"
+          ]
+        }
+      },
+      "required": [
+        "phone",
+        "media",
+        "bridge"
+      ]
+    },
+    "AudioStats": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "input_packets": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "input_bytes": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "output_packets": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "output_non_silence_bytes": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "pre_media_dropped_bytes": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "queued_bytes_at_stop": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "invalid_packets": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "foreign_packets": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "stale_packets": {
+          "type": "integer",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "input_packets",
+        "input_bytes",
+        "output_packets",
+        "output_non_silence_bytes",
+        "pre_media_dropped_bytes",
+        "queued_bytes_at_stop",
+        "invalid_packets",
+        "foreign_packets",
+        "stale_packets"
+      ]
+    },
+    "TranscriptSegment": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "call_id": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "session_id": {
+          "type": "string",
+          "maxLength": 512,
+          "minLength": 1
+        },
+        "event_id": {
+          "type": "string",
+          "maxLength": 512,
+          "minLength": 1
+        },
+        "speaker": {
+          "type": "string",
+          "enum": [
+            "user",
+            "assistant"
+          ]
+        },
+        "start_ms": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "end_ms": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "arrival_seq": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "received_at": {
+          "type": "string",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d{1,3})?Z$"
+        },
+        "delta": {
+          "type": "string",
+          "maxLength": 8192,
+          "minLength": 1
+        },
+        "phase": {
+          "type": "string",
+          "enum": [
+            "pre_media",
+            "active",
+            "draining"
+          ]
+        },
+        "delivery": {
+          "type": "string",
+          "enum": [
+            "input_observed",
+            "generated_playback_unknown",
+            "pre_media_dropped",
+            "after_stop_unknown"
+          ]
+        }
+      },
+      "required": [
+        "call_id",
+        "session_id",
+        "event_id",
+        "speaker",
+        "start_ms",
+        "end_ms",
+        "arrival_seq",
+        "received_at",
+        "delta",
+        "phase",
+        "delivery"
+      ]
+    },
+    "TranscriptEnvelope": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "call_id": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "state": {
+          "type": "string",
+          "enum": [
+            "not_applicable",
+            "unavailable",
+            "captured",
+            "partial"
+          ]
+        },
+        "completeness": {
+          "const": "not_guaranteed"
+        },
+        "segment_count": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 1000
+        },
+        "text_bytes": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 262144
+        },
+        "truncated": {
+          "type": "boolean"
+        },
+        "issues": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "transport_lost",
+              "finalization_unconfirmed",
+              "invalid_event",
+              "size_limit",
+              "persistence_error",
+              "output_delivery_uncertain"
+            ]
+          },
+          "maxItems": 10
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        }
+      },
+      "required": [
+        "call_id",
+        "state",
+        "completeness",
+        "segment_count",
+        "text_bytes",
+        "truncated",
+        "issues",
+        "sha256"
+      ]
+    },
+    "PostCallSemantics": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "role_match": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "value": {
+              "type": "string",
+              "enum": [
+                "relevant",
+                "gatekeeper",
+                "wrong_person",
+                "unknown"
+              ]
+            },
+            "evidence_event_ids": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "maxLength": 512,
+                "minLength": 1
+              },
+              "maxItems": 10
+            }
+          },
+          "required": [
+            "value",
+            "evidence_event_ids"
+          ]
+        },
+        "interest": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "value": {
+              "type": "string",
+              "enum": [
+                "interested",
+                "neutral",
+                "not_interested",
+                "unknown"
+              ]
+            },
+            "evidence_event_ids": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "maxLength": 512,
+                "minLength": 1
+              },
+              "maxItems": 10
+            }
+          },
+          "required": [
+            "value",
+            "evidence_event_ids"
+          ]
+        },
+        "rejection": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "value": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "evidence_event_ids": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "maxLength": 512,
+                "minLength": 1
+              },
+              "maxItems": 10
+            }
+          },
+          "required": [
+            "value",
+            "evidence_event_ids"
+          ]
+        },
+        "do_not_call": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "value": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "evidence_event_ids": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "maxLength": 512,
+                "minLength": 1
+              },
+              "maxItems": 10
+            }
+          },
+          "required": [
+            "value",
+            "evidence_event_ids"
+          ]
+        },
+        "next_step": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "kind": {
+              "type": "string",
+              "enum": [
+                "none",
+                "human_followup",
+                "send_material",
+                "callback",
+                "demo",
+                "discovery",
+                "unknown"
+              ]
+            },
+            "status": {
+              "type": "string",
+              "enum": [
+                "none",
+                "proposed",
+                "agreed",
+                "unclear"
+              ]
+            },
+            "details": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "maxLength": 500,
+                  "minLength": 0
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "evidence_event_ids": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "maxLength": 512,
+                "minLength": 1
+              },
+              "maxItems": 10
+            }
+          },
+          "required": [
+            "kind",
+            "status",
+            "details",
+            "evidence_event_ids"
+          ]
+        },
+        "callback": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "requested": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "when_text": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "maxLength": 256,
+                  "minLength": 0
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "timezone_text": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "maxLength": 128,
+                  "minLength": 0
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "evidence_event_ids": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "maxLength": 512,
+                "minLength": 1
+              },
+              "maxItems": 10
+            }
+          },
+          "required": [
+            "requested",
+            "when_text",
+            "timezone_text",
+            "evidence_event_ids"
+          ]
+        },
+        "referral": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "person_text": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "maxLength": 256,
+                  "minLength": 0
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "role_text": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "maxLength": 256,
+                  "minLength": 0
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "phone_text": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "maxLength": 128,
+                  "minLength": 0
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "contact_channel_text": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "maxLength": 256,
+                  "minLength": 0
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "evidence_event_ids": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "maxLength": 512,
+                "minLength": 1
+              },
+              "maxItems": 10
+            }
+          },
+          "required": [
+            "person_text",
+            "role_text",
+            "phone_text",
+            "contact_channel_text",
+            "evidence_event_ids"
+          ]
+        },
+        "questions_for_human": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "text": {
+                "type": "string",
+                "maxLength": 500,
+                "minLength": 1
+              },
+              "evidence_event_ids": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "maxLength": 512,
+                  "minLength": 1
+                },
+                "maxItems": 10
+              }
+            },
+            "required": [
+              "text",
+              "evidence_event_ids"
+            ]
+          },
+          "maxItems": 5
+        },
+        "commitments": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "text": {
+                "type": "string",
+                "maxLength": 500,
+                "minLength": 1
+              },
+              "evidence_event_ids": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "maxLength": 512,
+                  "minLength": 1
+                },
+                "maxItems": 10
+              },
+              "delivery": {
+                "type": "string",
+                "enum": [
+                  "unknown",
+                  "uncertain"
+                ]
+              }
+            },
+            "required": [
+              "text",
+              "evidence_event_ids",
+              "delivery"
+            ]
+          },
+          "maxItems": 5
+        },
+        "summary": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "text": {
+              "type": "string",
+              "maxLength": 1000,
+              "minLength": 1
+            },
+            "evidence_event_ids": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "maxLength": 512,
+                "minLength": 1
+              },
+              "maxItems": 10
+            }
+          },
+          "required": [
+            "text",
+            "evidence_event_ids"
+          ]
+        },
+        "confidence": {
+          "type": "string",
+          "enum": [
+            "low",
+            "medium",
+            "high"
+          ]
+        },
+        "needs_review": {
+          "type": "boolean"
+        },
+        "review_flags": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "insufficient_evidence",
+              "transcript_partial",
+              "contradiction",
+              "delivery_uncertain",
+              "ambiguous_callback",
+              "referral_unverified",
+              "unsupported_claim",
+              "policy_stop"
+            ]
+          },
+          "maxItems": 10
+        }
+      },
+      "required": [
+        "role_match",
+        "interest",
+        "rejection",
+        "do_not_call",
+        "next_step",
+        "callback",
+        "referral",
+        "questions_for_human",
+        "commitments",
+        "summary",
+        "confidence",
+        "needs_review",
+        "review_flags"
+      ]
+    },
+    "PostCallResult": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "result_id": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "call_id": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "contact_id": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "company_id": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "transcript_sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "created_at": {
+          "type": "string",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d{1,3})?Z$"
+        },
+        "extractor_model": {
+          "type": "string",
+          "maxLength": 128,
+          "minLength": 1
+        },
+        "extractor_prompt_version": {
+          "type": "string",
+          "maxLength": 64,
+          "minLength": 1
+        },
+        "schema_version": {
+          "const": "1"
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "validated",
+            "refused",
+            "failed",
+            "unavailable",
+            "running",
+            "interrupted"
+          ]
+        },
+        "error_code": {
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 128,
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "semantic": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/PostCallSemantics"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "needs_review": {
+          "type": "boolean"
+        },
+        "review_id": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "result_id",
+        "call_id",
+        "contact_id",
+        "company_id",
+        "transcript_sha256",
+        "created_at",
+        "extractor_model",
+        "extractor_prompt_version",
+        "schema_version",
+        "status",
+        "error_code",
+        "semantic",
+        "needs_review",
+        "review_id"
+      ]
+    },
+    "HumanReview": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "review_id": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "call_id": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "result_id": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "expected_contact_revision": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "actor": {
+          "$ref": "#/definitions/Actor"
+        },
+        "reviewed_at": {
+          "type": "string",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d{1,3})?Z$"
+        },
+        "decision": {
+          "type": "string",
+          "enum": [
+            "accept",
+            "correct",
+            "reject",
+            "inconclusive"
+          ]
+        },
+        "dnc_action": {
+          "type": "string",
+          "enum": [
+            "keep",
+            "confirm_block",
+            "clear_hold"
+          ]
+        },
+        "corrected_semantic": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/PostCallSemantics"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "accepted_next_action": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/NextAction"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "contact_updates": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "person_name": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "maxLength": 256,
+                  "minLength": 0
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "role_title": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "maxLength": 256,
+                  "minLength": 0
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "phone_e164": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "pattern": "^\\+[1-9]\\d{7,14}$"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          },
+          "required": [
+            "person_name",
+            "role_title",
+            "phone_e164"
+          ]
+        },
+        "notes": {
+          "type": "string",
+          "maxLength": 2000,
+          "minLength": 0
+        },
+        "evidence_event_ids": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "maxLength": 512,
+            "minLength": 1
+          },
+          "maxItems": 10
+        }
+      },
+      "required": [
+        "review_id",
+        "call_id",
+        "result_id",
+        "expected_contact_revision",
+        "actor",
+        "reviewed_at",
+        "decision",
+        "dnc_action",
+        "corrected_semantic",
+        "accepted_next_action",
+        "contact_updates",
+        "notes",
+        "evidence_event_ids"
+      ]
+    },
+    "CallEvent": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "call_id": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "seq": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "kind": {
+          "type": "string",
+          "enum": [
+            "prepared",
+            "approval_checked",
+            "start_reserved",
+            "originate_intent",
+            "originate_response",
+            "answered",
+            "media_ready",
+            "carrier_end",
+            "cleanup_started",
+            "resource_cleanup",
+            "live_started",
+            "live_closed",
+            "live_usage",
+            "delegation_fallback",
+            "policy_stop",
+            "fault",
+            "terminal",
+            "recovery",
+            "operator_block"
+          ]
+        },
+        "observed_at": {
+          "type": "string",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d{1,3})?Z$"
+        },
+        "source": {
+          "type": "string",
+          "enum": [
+            "app",
+            "ari",
+            "live",
+            "operator",
+            "recovery"
+          ]
+        },
+        "source_event_id": {
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 512,
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "channel_id": {
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 128,
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "cause": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 0
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "dialstatus": {
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 64,
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "error_code": {
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 128,
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "call_id",
+        "seq",
+        "kind",
+        "observed_at",
+        "source",
+        "source_event_id",
+        "channel_id",
+        "cause",
+        "dialstatus",
+        "error_code"
+      ]
+    },
+    "CallRecord": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "call_id": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "contact_id": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "company_id": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "authorization_id": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "actor": {
+          "$ref": "#/definitions/Actor"
+        },
+        "contact_revision": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "company_revision": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "target_e164": {
+          "type": "string",
+          "pattern": "^\\+[1-9]\\d{7,14}$"
+        },
+        "prepared_at": {
+          "type": "string",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d{1,3})?Z$"
+        },
+        "expires_at": {
+          "type": "string",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d{1,3})?Z$"
+        },
+        "manifest_hash": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "prompt_snapshot": {
+          "$ref": "#/definitions/PromptSnapshot"
+        },
+        "config_snapshot": {
+          "$ref": "#/definitions/ConfigSnapshot"
+        },
+        "context_snapshot": {
+          "$ref": "#/definitions/ContactContext"
+        },
+        "state": {
+          "type": "string",
+          "enum": [
+            "prepared",
+            "starting",
+            "dialing",
+            "answered",
+            "ending",
+            "terminal"
+          ]
+        },
+        "started_at": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d{1,3})?Z$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "originate_intent_at": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d{1,3})?Z$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "answered_at": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d{1,3})?Z$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "media_ready_at": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d{1,3})?Z$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "end_observed_at": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d{1,3})?Z$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "finalized_at": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d{1,3})?Z$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "ari_app": {
+          "type": "string",
+          "maxLength": 128,
+          "minLength": 1
+        },
+        "phone_channel_id": {
+          "type": "string",
+          "maxLength": 128,
+          "minLength": 1
+        },
+        "media_channel_id": {
+          "type": "string",
+          "maxLength": 128,
+          "minLength": 1
+        },
+        "bridge_id": {
+          "type": "string",
+          "maxLength": 128,
+          "minLength": 1
+        },
+        "openai_session_id": {
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 512,
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "telephony_outcome": {
+          "type": "string",
+          "enum": [
+            "not_attempted",
+            "answered",
+            "no_answer",
+            "busy",
+            "rejected",
+            "failed",
+            "unknown_unanswered",
+            "unknown"
+          ]
+        },
+        "termination_reason": {
+          "type": "string",
+          "enum": [
+            "remote_hangup",
+            "operator_stop",
+            "process_signal",
+            "no_answer_timeout",
+            "carrier_busy",
+            "carrier_rejected",
+            "ari_error",
+            "openai_error",
+            "media_error",
+            "max_duration",
+            "startup_timeout",
+            "policy_stop",
+            "persistence_error",
+            "process_interrupted",
+            "unknown"
+          ]
+        },
+        "ari_cause": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 0
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "dialstatus": {
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 64,
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "talk_duration_ms": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 0
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "total_duration_ms": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 0
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "processing_status": {
+          "type": "string",
+          "enum": [
+            "ok",
+            "failed",
+            "interrupted"
+          ]
+        },
+        "cleanup_state": {
+          "$ref": "#/definitions/CleanupState"
+        },
+        "openai_finalization": {
+          "type": "string",
+          "enum": [
+            "not_started",
+            "confirmed",
+            "unconfirmed"
+          ]
+        },
+        "latest_usage_seconds": {
+          "anyOf": [
+            {
+              "type": "number",
+              "minimum": 0
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "final_usage_seconds": {
+          "anyOf": [
+            {
+              "type": "number",
+              "minimum": 0
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "transcript_state": {
+          "type": "string",
+          "enum": [
+            "not_applicable",
+            "unavailable",
+            "captured",
+            "partial"
+          ]
+        },
+        "transcript_envelope": {
+          "$ref": "#/definitions/TranscriptEnvelope"
+        },
+        "audio_stats": {
+          "$ref": "#/definitions/AudioStats"
+        },
+        "review_required": {
+          "type": "boolean"
+        },
+        "scenario_id": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_-]{2,63}$"
+        },
+        "scenario_version": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64
+        },
+        "scenario_variant_label": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "scenario_hash": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        }
+      },
+      "required": [
+        "call_id",
+        "contact_id",
+        "company_id",
+        "authorization_id",
+        "actor",
+        "contact_revision",
+        "company_revision",
+        "target_e164",
+        "prepared_at",
+        "expires_at",
+        "manifest_hash",
+        "prompt_snapshot",
+        "config_snapshot",
+        "context_snapshot",
+        "state",
+        "started_at",
+        "originate_intent_at",
+        "answered_at",
+        "media_ready_at",
+        "end_observed_at",
+        "finalized_at",
+        "ari_app",
+        "phone_channel_id",
+        "media_channel_id",
+        "bridge_id",
+        "openai_session_id",
+        "telephony_outcome",
+        "termination_reason",
+        "ari_cause",
+        "dialstatus",
+        "talk_duration_ms",
+        "total_duration_ms",
+        "processing_status",
+        "cleanup_state",
+        "openai_finalization",
+        "latest_usage_seconds",
+        "final_usage_seconds",
+        "transcript_state",
+        "transcript_envelope",
+        "audio_stats",
+        "review_required",
+        "scenario_id",
+        "scenario_version",
+        "scenario_variant_label",
+        "scenario_hash"
+      ]
+    }
+  }
+}

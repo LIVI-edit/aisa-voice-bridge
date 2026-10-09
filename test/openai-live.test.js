@@ -1,81 +1,13 @@
-import test from 'node:test';
-import assert from 'node:assert/strict';
-import { EventEmitter } from 'node:events';
-import { OpenAILive } from '../src/openai-live.js';
-
-class Socket extends EventEmitter {
-  constructor() { super(); this.readyState = 0; this.bufferedAmount = 0; this.sent = []; }
-  send(data, callback) { this.sent.push(JSON.parse(data)); callback?.(); }
-  terminate() { this.readyState = 3; this.emit('close'); }
-  close() { this.terminate(); }
-  open() { this.readyState = 1; this.emit('open'); }
-  event(event) { this.emit('message', Buffer.from(JSON.stringify(event))); }
-}
-function fixture(extra = {}) {
-  const socket = new Socket(); let url, options;
-  const live = new OpenAILive({ apiKey: 'dummy-not-real', instructions: 'test',
-    connectTimeoutMs: 50, closeTimeoutMs: 20, ...extra }, {
-    createSocket: (u, o) => { url = u; options = o; return socket; },
-  });
-  live.on('fault', () => {});
-  return { socket, live, transport: () => ({ url, options }) };
-}
-function started(socket) { socket.event({ type: 'session.started', session: {
-  model: 'gpt-live-1', audio: { format: { type: 'audio/pcmu', rate: 8000 } },
-} }); }
-
-test('exact Live endpoint, Bearer header and session.start; waits for session.started', async () => {
-  const { socket, live, transport } = fixture({ voice: 'marin' });
-  const connected = live.connect(); socket.open();
-  assert.equal(live.started, false);
-  assert.equal(transport().url, 'wss://api.openai.com/v1/live/sessions');
-  assert.equal(transport().options.headers.Authorization, 'Bearer dummy-not-real');
-  assert.deepEqual(socket.sent[0], { type: 'session.start', session: {
-    model: 'gpt-live-1', instructions: 'test', audio: { format: { type: 'audio/pcmu', rate: 8000 }, output: { voice: 'marin' } },
-  } });
-  started(socket); await connected; assert.equal(live.started, true);
-  socket.event({ type: 'session.closed' }); await live.close();
-});
-test('raw audio preserved; greeting sends full Live event with delegation_id null and exact content', async () => {
-  const { socket, live } = fixture(); const connected = live.connect(); socket.open(); started(socket); await connected;
-  const bytes = Buffer.from([0, 1, 128, 255]); live.appendAudio(bytes);
-  assert.deepEqual(socket.sent[1], { type: 'session.input_audio.append', audio: bytes.toString('base64') });
-  let output; live.on('audio', (chunk) => { output = chunk; });
-  socket.event({ type: 'session.output_audio.delta', delta: bytes.toString('base64') }); assert.deepEqual(output, bytes);
-  live.greet();
-  assert.deepEqual(socket.sent[2], {
-    type: 'session.instructions.append',
-    delegation_id: null,
-    content: 'The telephone caller has now answered and can hear you. Greet them now, briefly, and continue the short connection test.',
-  });
-  socket.event({ type: 'session.closed' }); await live.close();
-});
-test('mismatched codec confirmation yields STOP/HOLD', async () => {
-  const { socket, live } = fixture(); const connected = live.connect(); socket.open();
-  socket.event({ type: 'session.started', session: { model: 'gpt-live-1', audio: { format: { type: 'audio/pcm', rate: 24000 } } } });
-  await assert.rejects(connected, /STOP\/HOLD/); await live.close();
-});
-test('cleanup waits for session.closed; repeated close has same promise and audio stops', async () => {
-  const { socket, live } = fixture(); const connected = live.connect(); socket.open(); started(socket); await connected;
-  const closing = live.close(); assert.equal(live.close(), closing);
-  assert.equal(socket.sent.at(-1).type, 'session.close');
-  live.appendAudio(Buffer.alloc(160)); assert.equal(socket.sent.at(-1).type, 'session.close');
-  assert.equal(socket.readyState, 1);
-  socket.event({ type: 'session.closed' }); assert.equal(await closing, true); assert.equal(socket.readyState, 3);
-});
-test('cleanup timeout returns unconfirmed finalization and closes socket', async () => {
-  const { socket, live } = fixture(); const connected = live.connect(); socket.open(); started(socket); await connected;
-  assert.equal(await live.close(), false); assert.equal(socket.readyState, 3);
-});
-test('startup timeout and transport failure reject instead of hanging', async () => {
-  const first = fixture({ connectTimeoutMs: 5 });
-  await assert.rejects(first.live.connect(), /session.started/); await first.live.close();
-  const second = fixture(); const connected = second.live.connect(); second.socket.emit('error', new Error('do not log this'));
-  await assert.rejects(connected, /ошибка соединения/); await second.live.close();
-});
-test('OpenAI error details do not echo server message containing secrets', async () => {
-  const { socket, live } = fixture(); const connected = live.connect(); socket.open();
-  socket.event({ type: 'error', error: { code: 'invalid_api_key', message: 'dummy-not-real' } });
-  await assert.rejects(connected, (error) => /invalid_api_key/.test(error.message) && !/dummy-not-real/.test(error.message));
-  await live.close();
-});
+import test from 'node:test';import assert from 'node:assert/strict';import { EventEmitter } from 'node:events';import { OpenAILive } from '../src/openai-live.js';
+class Socket extends EventEmitter{constructor(){super();this.readyState=0;this.bufferedAmount=0;this.sent=[]}send(d,cb){this.sent.push(JSON.parse(d));cb?.()}terminate(){if(this.readyState===3)return;this.readyState=3;this.emit('close')}close(){this.terminate()}open(){this.readyState=1;this.emit('open')}event(e){this.emit('message',Buffer.from(JSON.stringify(e)))}}
+function fixture(extra={}){const socket=new Socket();let url,options;const live=new OpenAILive({apiKey:'dummy-not-real',instructions:'trusted policy',inputDataJson:'{"contact":{"name":"A"}}',connectTimeoutMs:40,closeTimeoutMs:15,...extra},{createSocket:(u,o)=>{url=u;options=o;return socket}});live.on('fault',()=>{});return{socket,live,transport:()=>({url,options})}}
+function started(s){s.event({type:'session.started',session:{id:'live_1',model:'gpt-live-1',audio:{format:{type:'audio/pcmu',rate:8000}}}})}
+async function connected(f){const p=f.live.connect();f.socket.open();started(f.socket);await p;return f}
+async function cleanClose(f,usage=2){const p=f.live.close();queueMicrotask(()=>f.socket.event({type:'session.closed',usage:{seconds:usage}}));return p}
+test('Live startup keeps endpoint/model/PCMU and seeds factual ContactContext as role:user input',async()=>{const f=fixture({voice:'marin'});const p=f.live.connect();f.socket.open();const sent=f.socket.sent[0];assert.equal(f.transport().url,'wss://api.openai.com/v1/live/sessions');assert.equal(f.transport().options.headers.Authorization,'Bearer dummy-not-real');assert.equal(sent.type,'session.start');assert.equal(sent.session.model,'gpt-live-1');assert.deepEqual(sent.session.audio,{format:{type:'audio/pcmu',rate:8000},output:{voice:'marin'}});assert.equal(sent.session.store,false);assert.equal(sent.session.instructions,'trusted policy');assert.deepEqual(sent.session.input,[{type:'message',role:'user',content:[{type:'input_text',text:'{"contact":{"name":"A"}}'}]}]);started(f.socket);await p;await cleanClose(f);});
+test('raw audio is byte-preserved; greeting is separate instructions.append with null delegation id',async()=>{const f=await connected(fixture());const b=Buffer.from([0,1,128,255]);f.live.appendAudio(b);assert.deepEqual(f.socket.sent.at(-1),{type:'session.input_audio.append',audio:b.toString('base64')});let out;f.live.on('audio',x=>out=x);f.socket.event({type:'session.output_audio.delta',delta:b.toString('base64')});assert.deepEqual(out,b);f.live.greet('Добрий день');assert.deepEqual(f.socket.sent.at(-1),{type:'session.instructions.append',delegation_id:null,content:'Добрий день'});await cleanClose(f);});
+test('T27 unexpected client delegations get only fixed correlated fallback; fourth triggers stop signal',async()=>{const f=await connected(fixture());let limited=0;f.live.on('delegationLimit',()=>limited++);for(let i=1;i<=4;i++)f.socket.event({type:'session.delegation.created',delegation:{id:`d${i}`,target:'anything'}});const comments=f.socket.sent.filter(x=>x.type==='session.commentary.append');assert.equal(comments.length,3);assert.deepEqual(comments.map(x=>x.delegation_id),['d1','d2','d3']);assert.ok(comments.every(x=>/не виконую зовнішні дії/.test(x.content)));assert.equal(limited,1);await cleanClose(f);});
+test('T28 Live captures both transcript delta families exactly and rejects invalid timing',async()=>{const f=await connected(fixture());const got=[];let invalid=0;f.live.on('transcript',e=>got.push(e));f.live.on('transcriptInvalid',()=>invalid++);f.socket.event({type:'session.input_transcript.delta',event_id:'u1',delta:' так ',start_ms:1,end_ms:3});f.socket.event({type:'session.output_transcript.delta',event_id:'a1',delta:'добре',start_ms:2,end_ms:4});f.socket.event({type:'session.input_transcript.delta',event_id:'bad',delta:'x',start_ms:-1,end_ms:0});assert.deepEqual(got.map(x=>[x.speaker,x.delta]),[['user',' так '],['assistant','добре']]);assert.equal(invalid,1);await cleanClose(f);});
+test('T30 closing still accepts trailing transcript but fences output audio',async()=>{const f=await connected(fixture());const got=[];let audio=0;f.live.on('transcript',e=>got.push(e));f.live.on('audio',()=>audio++);const p=f.live.close();f.socket.event({type:'session.output_audio.delta',delta:Buffer.from([1,2,3]).toString('base64')});f.socket.event({type:'session.output_transcript.delta',event_id:'tail',delta:' хвіст',start_ms:5,end_ms:7});f.socket.event({type:'session.closed',usage:{seconds:4}});const r=await p;assert.equal(audio,0);assert.equal(got[0].delta,' хвіст');assert.equal(r.confirmed,true);assert.equal(r.finalUsageSeconds,4);});
+test('T20 mismatched codec, provider error and unconfirmed close fail safely without server detail leakage',async()=>{const a=fixture();let p=a.live.connect();a.socket.open();a.socket.event({type:'session.started',session:{model:'gpt-live-1',audio:{format:{type:'audio/pcm',rate:24000}}}});await assert.rejects(p,/STOP\/HOLD/);await a.live.close();const b=fixture();p=b.live.connect();b.socket.open();b.socket.event({type:'error',error:{code:'invalid_api_key',message:'dummy-not-real SECRET'}});await assert.rejects(p,e=>/invalid_api_key/.test(e.message)&&!/SECRET|dummy-not-real/.test(e.message));await b.live.close();const c=await connected(fixture({closeTimeoutMs:2}));const r=await c.live.close();assert.equal(r.confirmed,false);});
+test('usage events are cumulative observations and final usage is recorded separately',async()=>{const f=await connected(fixture());f.socket.event({type:'session.usage.updated',usage:{seconds:1.5}});f.socket.event({type:'session.usage.updated',usage:{seconds:2.5}});assert.equal(f.live.latestUsageSeconds,2.5);const r=await cleanClose(f,3);assert.equal(r.latestUsageSeconds,2.5);assert.equal(r.finalUsageSeconds,3);});

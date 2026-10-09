@@ -1,0 +1,432 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "aisa_post_call_semantics_v1",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "role_match": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "value": {
+          "type": "string",
+          "enum": [
+            "relevant",
+            "gatekeeper",
+            "wrong_person",
+            "unknown"
+          ]
+        },
+        "evidence_event_ids": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "maxLength": 512,
+            "minLength": 1
+          },
+          "maxItems": 10
+        }
+      },
+      "required": [
+        "value",
+        "evidence_event_ids"
+      ]
+    },
+    "interest": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "value": {
+          "type": "string",
+          "enum": [
+            "interested",
+            "neutral",
+            "not_interested",
+            "unknown"
+          ]
+        },
+        "evidence_event_ids": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "maxLength": 512,
+            "minLength": 1
+          },
+          "maxItems": 10
+        }
+      },
+      "required": [
+        "value",
+        "evidence_event_ids"
+      ]
+    },
+    "rejection": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "value": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "evidence_event_ids": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "maxLength": 512,
+            "minLength": 1
+          },
+          "maxItems": 10
+        }
+      },
+      "required": [
+        "value",
+        "evidence_event_ids"
+      ]
+    },
+    "do_not_call": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "value": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "evidence_event_ids": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "maxLength": 512,
+            "minLength": 1
+          },
+          "maxItems": 10
+        }
+      },
+      "required": [
+        "value",
+        "evidence_event_ids"
+      ]
+    },
+    "next_step": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "type": "string",
+          "enum": [
+            "none",
+            "human_followup",
+            "send_material",
+            "callback",
+            "demo",
+            "discovery",
+            "unknown"
+          ]
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "none",
+            "proposed",
+            "agreed",
+            "unclear"
+          ]
+        },
+        "details": {
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 500,
+              "minLength": 0
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "evidence_event_ids": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "maxLength": 512,
+            "minLength": 1
+          },
+          "maxItems": 10
+        }
+      },
+      "required": [
+        "kind",
+        "status",
+        "details",
+        "evidence_event_ids"
+      ]
+    },
+    "callback": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "requested": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "when_text": {
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 256,
+              "minLength": 0
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "timezone_text": {
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 128,
+              "minLength": 0
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "evidence_event_ids": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "maxLength": 512,
+            "minLength": 1
+          },
+          "maxItems": 10
+        }
+      },
+      "required": [
+        "requested",
+        "when_text",
+        "timezone_text",
+        "evidence_event_ids"
+      ]
+    },
+    "referral": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "person_text": {
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 256,
+              "minLength": 0
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "role_text": {
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 256,
+              "minLength": 0
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "phone_text": {
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 128,
+              "minLength": 0
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "contact_channel_text": {
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 256,
+              "minLength": 0
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "evidence_event_ids": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "maxLength": 512,
+            "minLength": 1
+          },
+          "maxItems": 10
+        }
+      },
+      "required": [
+        "person_text",
+        "role_text",
+        "phone_text",
+        "contact_channel_text",
+        "evidence_event_ids"
+      ]
+    },
+    "questions_for_human": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "text": {
+            "type": "string",
+            "maxLength": 500,
+            "minLength": 1
+          },
+          "evidence_event_ids": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "maxLength": 512,
+              "minLength": 1
+            },
+            "maxItems": 10
+          }
+        },
+        "required": [
+          "text",
+          "evidence_event_ids"
+        ]
+      },
+      "maxItems": 5
+    },
+    "commitments": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "text": {
+            "type": "string",
+            "maxLength": 500,
+            "minLength": 1
+          },
+          "evidence_event_ids": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "maxLength": 512,
+              "minLength": 1
+            },
+            "maxItems": 10
+          },
+          "delivery": {
+            "type": "string",
+            "enum": [
+              "unknown",
+              "uncertain"
+            ]
+          }
+        },
+        "required": [
+          "text",
+          "evidence_event_ids",
+          "delivery"
+        ]
+      },
+      "maxItems": 5
+    },
+    "summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "text": {
+          "type": "string",
+          "maxLength": 1000,
+          "minLength": 1
+        },
+        "evidence_event_ids": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "maxLength": 512,
+            "minLength": 1
+          },
+          "maxItems": 10
+        }
+      },
+      "required": [
+        "text",
+        "evidence_event_ids"
+      ]
+    },
+    "confidence": {
+      "type": "string",
+      "enum": [
+        "low",
+        "medium",
+        "high"
+      ]
+    },
+    "needs_review": {
+      "type": "boolean"
+    },
+    "review_flags": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "insufficient_evidence",
+          "transcript_partial",
+          "contradiction",
+          "delivery_uncertain",
+          "ambiguous_callback",
+          "referral_unverified",
+          "unsupported_claim",
+          "policy_stop"
+        ]
+      },
+      "maxItems": 10
+    }
+  },
+  "required": [
+    "role_match",
+    "interest",
+    "rejection",
+    "do_not_call",
+    "next_step",
+    "callback",
+    "referral",
+    "questions_for_human",
+    "commitments",
+    "summary",
+    "confidence",
+    "needs_review",
+    "review_flags"
+  ]
+}
