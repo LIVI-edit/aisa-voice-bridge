@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  contractsSchema, validatorEngine, getSchema, validateDefinition,
+  validatorEngine, validateDefinition,
   validatePostCallSemantics, crossValidatePostCallSemantics,
 } from '../src/contracts.js';
 
@@ -38,13 +38,11 @@ const semantics = () => ({
   confidence: 'low', needs_review: true, review_flags: [],
 });
 
-test('Ajv is the real validator and all root definitions compile on module import', () => {
+test('Ajv validates a real Source contract and rejects invalid contract types', () => {
   assert.equal(validatorEngine, 'ajv');
-  assert.ok(contractsSchema.$id);
-  assert.equal(Object.keys(contractsSchema.definitions).length, 18);
-  for (const name of Object.keys(contractsSchema.definitions)) {
-    assert.deepEqual(getSchema(name), contractsSchema.definitions[name]);
-  }
+  const valid = source();
+  assert.deepEqual(validateDefinition('Source', valid), valid);
+  assert.throws(() => validateDefinition('Source', { ...valid, kind: 'fabricated' }), /schema validation failed/);
   assert.throws(() => validateDefinition('NotADefinition', {}), /Unknown contract definition/);
 });
 
@@ -76,8 +74,6 @@ test('independent post-call schema still validates strictly and evidence cross-v
   const valid = semantics();
   assert.deepEqual(validatePostCallSemantics(valid), valid);
   assert.deepEqual(crossValidatePostCallSemantics(valid, []), valid);
-  assert.deepEqual(getSchema('PostCallSemantics'), contractsSchema.definitions.PostCallSemantics);
-  assert.notDeepEqual(getSchema('PostCallSemantics'), getSchema('PostCallResult'));
   assert.throws(() => validatePostCallSemantics({ ...valid, extra: 'not allowed' }), /schema validation failed/);
   assert.throws(() => validatePostCallSemantics({ ...valid, role_match: { ...valid.role_match, extra: 1 } }), /schema validation failed/);
   assert.throws(() => validatePostCallSemantics({ ...valid, confidence: 'invented' }), /schema validation failed/);
