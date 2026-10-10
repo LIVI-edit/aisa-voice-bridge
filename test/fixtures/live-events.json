@@ -1,0 +1,5 @@
+[
+  {"type":"session.input_transcript.delta","event_id":"u1","delta":"Добрий ","start_ms":100,"end_ms":200},
+  {"type":"session.output_transcript.delta","event_id":"a1","delta":"Вітаю","start_ms":150,"end_ms":230},
+  {"type":"session.input_transcript.delta","event_id":"u2","delta":"день","start_ms":200,"end_ms":260}
+]

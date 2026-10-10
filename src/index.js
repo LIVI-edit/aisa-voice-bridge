@@ -1,24 +1,18 @@
-import { loadConfig, validateNumber, safeMessage } from './config.js';
-import { CallSession } from './call-session.js';
+import { runCli, formatCliError } from './cli.js';
+import { loadConfig } from './config.js';
 
+try { await import('dotenv/config'); } catch (error) { if (error?.code !== 'ERR_MODULE_NOT_FOUND') throw error; }
 let config;
-let session;
 try {
-  if (process.argv.length !== 3) throw new Error('Запуск: node src/index.js +380XXXXXXXXX');
-  const number = validateNumber(process.argv[2]);
-  config = loadConfig();
-  session = new CallSession(config, number);
-  const stop = () => { void session.cleanup('Остановка по сигналу'); };
-  process.on('SIGINT', stop);
-  process.on('SIGTERM', stop);
-  try {
-    const result = await session.run();
-    if (result.failed) process.exitCode = 1;
-  } finally {
-    process.off('SIGINT', stop); process.off('SIGTERM', stop);
-  }
+  config = loadConfig(process.env);
+  const signalRegistrar = (handler) => {
+    const onInt=()=>handler('SIGINT'), onTerm=()=>handler('SIGTERM');
+    process.once('SIGINT',onInt); process.once('SIGTERM',onTerm);
+    return ()=>{process.off('SIGINT',onInt);process.off('SIGTERM',onTerm)};
+  };
+  const code = await runCli(process.argv.slice(2), { env: process.env, signalRegistrar });
+  process.exitCode = code;
 } catch (error) {
-  console.error(safeMessage(error, config));
+  console.error(formatCliError(error, config));
   process.exitCode = 1;
-  if (session) await session.cleanup('Завершение после ошибки');
 }

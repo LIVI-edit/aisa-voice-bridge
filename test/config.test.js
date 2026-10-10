@@ -1,38 +1,21 @@
-import test from 'node:test';
-import assert from 'node:assert/strict';
-import { loadConfig, validateNumber, normalizeZadarmaNumber, safeMessage } from '../src/config.js';
-const env = { OPENAI_API_KEY: 'dummy-key', ASTERISK_ARI_USER: 'bridge', ASTERISK_ARI_PASSWORD: 'dummy-password' };
-test('config has localhost ARI, PCMU PT0 and default Zadarma endpoint', () => {
-  const config = loadConfig(env);
-  assert.equal(config.ariUrl, 'http://127.0.0.1:8088/ari');
-  assert.equal(config.endpoint, '220546'); assert.equal(config.payloadType, 0);
+import test from 'node:test'; import assert from 'node:assert/strict';
+import { loadConfig, validateRuntimeConfig, safeMessage } from '../src/config.js';
+import { testEnv } from './fixtures/helpers.mjs';
+
+test('T04 missing deployment route/policy keeps offline config loadable but blocks real start',()=>{
+  const cfg=loadConfig({REAL_CALLS_ENABLED:'false'});assert.equal(cfg.realCallsEnabled,false);assert.equal(cfg.endpointAlias,null);assert.throws(()=>validateRuntimeConfig(cfg),/disabled/);
+  const real=loadConfig({REAL_CALLS_ENABLED:'true',ASTERISK_OUTBOUND_ENDPOINT:'T',OUTBOUND_CALLER_ID:'+380441234567'});assert.throws(()=>validateRuntimeConfig(real),/policy|TELEPHONY/);
 });
-test('external ARI, URL credentials, wrong static codec PT, public UDP bind and missing secrets rejected', () => {
-  for (const extra of [{ ASTERISK_ARI_URL: 'http://example.com:8088/ari' },
-    { ASTERISK_ARI_URL: 'http://u:p@127.0.0.1:8088/ari' },
-    { RTP_PAYLOAD_TYPE: '8' }, { RTP_PAYLOAD_TYPE: '-1' }, { RTP_BIND_ADDRESS: '0.0.0.0' },
-    { OPENAI_API_KEY: '' }, { ZADARMA_ENDPOINT: 'x/y' }]) assert.throws(() => loadConfig({ ...env, ...extra }));
+test('config preserves localhost ARI and loopback RTP only',()=>{
+  assert.equal(loadConfig({}).ariUrl,'http://127.0.0.1:8088/ari');
+  for(const env of [{ASTERISK_ARI_URL:'http://10.0.0.1:8088/ari'},{RTP_BIND_ADDRESS:'0.0.0.0'},{RTP_PAYLOAD_TYPE:'8'}])assert.throws(()=>loadConfig(env));
 });
-test('phone format rejects SIP dial-string injection and accepts E.164', () => {
-  assert.equal(validateNumber('+380991234567'), '+380991234567');
-  for (const value of ['380991234567', '+3801@other', '+380/12345678', '+0123456789', '']) assert.throws(() => validateNumber(value));
+test('real runtime requires neutral endpoint, caller id, policy, approval and server secrets',()=>{
+  const cfg=loadConfig(testEnv('/tmp/not-used.sqlite',true));assert.equal(validateRuntimeConfig(cfg),cfg);
+  for(const key of ['ASTERISK_OUTBOUND_ENDPOINT','OUTBOUND_CALLER_ID','TELEPHONY_APPROVAL_REF','PRODUCTION_CALLING_POLICY_ID','ASTERISK_ARI_USER','ASTERISK_ARI_PASSWORD','OPENAI_API_KEY']){const env=testEnv('/tmp/x.sqlite',true);delete env[key];assert.throws(()=>validateRuntimeConfig(loadConfig(env)));}
 });
-test('Zadarma normalization removes leading plus only from the validated dial target', () => {
-  const number = validateNumber('+380991234567');
-  assert.equal(normalizeZadarmaNumber(number), '380991234567');
-  assert.equal(number, '+380991234567');
-});
-test('CLI validation and normalization still reject numbers without plus and malformed international numbers', () => {
-  for (const number of ['380991234567', '00380991234567', '++380991234567',
-    '+38099+1234567', '+380991234567@220546', '+380 991234567', '+0123456789', '+380', '']) {
-    assert.throws(() => validateNumber(number));
-    assert.throws(() => normalizeZadarmaNumber(number));
-  }
-});
-test('known secrets and Basic token redacted in error text', () => {
-  const config = loadConfig(env);
-  const token = Buffer.from('bridge:dummy-password').toString('base64');
-  const message = safeMessage(new Error(`dummy-key dummy-password ${token} Bearer secret`), config);
-  assert.equal(message.includes('dummy-key'), false); assert.equal(message.includes('dummy-password'), false);
-  assert.equal(message.includes(token), false); assert.equal(message.includes('Bearer secret'), false);
+test('T44 safe errors redact API/ARI auth and E.164 values',()=>{
+  const cfg=loadConfig(testEnv('/tmp/x.sqlite',true));const basic=Buffer.from(`${cfg.ariUser}:${cfg.ariPassword}`).toString('base64');
+  const m=safeMessage(new Error(`Bearer ${cfg.apiKey} Basic ${basic} password=${cfg.ariPassword} phone +380501234567`),cfg);
+  assert.doesNotMatch(m,/sk-test|ari-test-secret|380501234567/);assert.match(m,/REDACTED|PHONE/);
 });
